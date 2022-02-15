@@ -1,0 +1,7 @@
+Parameter,Method,R,p
+Binding,DeepDDG,0.38,<0.001
+Binding,mCSM,0.24,<0.001
+Binding,Simba_IB,0.15,<0.001
+Expression,DeepDDG,0.48,<0.001
+Expression,mCSM,0.33,<0.001
+Expression,Simba_IB,0.18,<0.001

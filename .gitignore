@@ -1,0 +1,6 @@
+/*.Rproj.user/*
+.Rhistory
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+.Rproj.user
+figures/*
