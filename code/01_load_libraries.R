@@ -1,7 +1,6 @@
 library(tidyverse)
 library(patchwork)
 library(magrittr)
-library(knitr)
 library(krisr)
 
 source("code/theme_pub.R")

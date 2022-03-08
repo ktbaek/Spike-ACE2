@@ -23,6 +23,12 @@ x <- bloom_2 %>%
   )) %>% 
   filter(
     type != "Stop",
-    bind_avg >= -4.5
+    bind_lib1 >= -4.5,
+    bind_lib2 >= -4.5
     ) %>% 
-  write_csv("data/processed/bloom_clean.csv")
+  write_csv("data/processed/bloom_clean.csv") 
+
+x %>% 
+  select(-bind_res, -expr_res, -type) %>% 
+  write_csv("tables/Table_S1.csv") 
+  

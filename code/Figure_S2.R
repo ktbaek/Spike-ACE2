@@ -43,7 +43,8 @@ p2 <- bloom_2 %>%
 
 p1 / p2 + 
   plot_layout(guides = "collect") + 
-  plot_annotation(tag_levels = 'A') &
+  plot_annotation(tag_levels = "a") & 
+  theme(plot.tag = element_text(size = 14)) &
   theme(legend.position = "bottom")
 
 ggsave("figures/Figure_S2.png", width = 15, height = 14, units = "cm", dpi = 600)

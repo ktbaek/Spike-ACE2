@@ -1,5 +1,5 @@
 Parameter,Method,R,p
-Binding,mCSM,0.32,<0.001
-Binding,Simba_IB,0.31,<0.001
-Expression,mCSM,0.46,<0.001
-Expression,Simba_IB,0.44,<0.001
+Binding,mCSM,0.3,<0.001
+Binding,Simba_IB,0.29,<0.001
+Expression,mCSM,0.45,<0.001
+Expression,Simba_IB,0.43,<0.001

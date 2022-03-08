@@ -6,7 +6,7 @@ read_csv("data/interim/all_data.csv", col_types = cols(RSA = col_double())) %>%
     group_1 = str_remove_all(group_1, "[()\\]\\[]"),
     group_2 = cut_width(value, 0.25, center = 0.125),
     group_2 = str_remove_all(group_2, "[()\\]\\[]")
-  ) %>% 
+  ) %>%
   rowwise() %>% 
   mutate(
     group_1 = as.double(str_split(group_1, ",")[[1]][1]) + 0.25,
@@ -43,3 +43,20 @@ read_csv("data/interim/all_data_avg.csv") %>%
     sd_ddg = sd(ddG, na.rm = TRUE)
     ) %T>%
   write_csv("data/interim/all_data_avg_binned.csv")
+
+read_csv("data/interim/all_data_avg.csv") %>% 
+  select(-ddG) %>% 
+  filter(Method == "Simba_IB") %>% 
+  pivot_longer(c(expr_avg_all, bind_avg_all), names_to = "Parameter") %>%
+  mutate(
+    group = cut_width(RSA, 0.1, center = 0.05),
+    group = str_remove_all(group_1, "[()\\]\\[]")
+  ) %>% 
+  rowwise() %>% 
+  mutate(mid = as.double(str_split(group, ",")[[1]][1]) + 0.05) %>% 
+  group_by(Parameter, Method, mid) %>% 
+  summarize(
+    mean_value = mean(value, na.rm = TRUE),
+    sd_value = sd(value, na.rm = TRUE)
+  ) %T>%
+  write_csv("data/interim/all_data_avg_binned_RSA.csv")

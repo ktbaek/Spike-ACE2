@@ -38,7 +38,8 @@ p2 <- bloom_2 %>%
   ) + 
   facet_wrap(~ parameter, scales = "free", labeller = labeller(parameter = param_names)) 
 
-p1 / p2 + plot_annotation(tag_levels= "A")
+p1 / p2 + plot_annotation(tag_levels = "a") & 
+  theme(plot.tag = element_text(size = 14))
 
 
 ggsave("figures/Figure_S1.png", width = 15, height = 15, units = "cm", dpi = 600)
