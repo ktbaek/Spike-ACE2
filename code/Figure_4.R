@@ -1,51 +1,68 @@
-all_data_avg <- read_csv("data/interim/all_data_avg.csv")
+all_data <- read_csv("data/interim/all_data.csv", col_types = cols(RSA = col_double()))
 
 p_value <- function(x,y) {
   m <- lm(y ~ x)
   return(summary(m)$coefficients[2,4])
 }
 
-param_names <- c(
-  "bind_avg_all" = "Binding",
-  "expr_avg_all" = "Expression"
-)
-
-all_data_avg %>% 
+p1 <- all_data %>% 
   filter(Method != "Simba_SYM") %>% 
-  select(-RSA) %>% 
-  pivot_longer(c(expr_avg_all, bind_avg_all), names_to = "Parameter") %>% 
-  group_by(Method, Parameter) %>% 
+  group_by(PDB, Method) %>% 
   mutate(
-    R = round0(sqrt(rsquared(value, ddG)), 2),
-    p = case_when(
-      round0(p_value(value, ddG), 2) == "0.00" ~ "<0.005",
-      TRUE ~ paste0("=", round0(p_value(value, ddG), 2))
-    )
-  ) %>% 
-  mutate(
-    hpos = ifelse(Method == "DeepDDG", 0, 1),
-    xpos = ifelse(Method == "DeepDDG", -4.6, 0.7),
-    ypos = ifelse(Method == "DeepDDG", 1.6, -5)
+    R = sqrt(rsquared(expr_avg, ddG)),
+    p = p_value(expr_avg, ddG)
   ) %>% 
   ggplot() +
-  geom_point(aes(value, ddG), size = 0.6, stroke = 0, alpha = 0.2) +
-  geom_smooth(aes(value, ddG), method = "lm", se = FALSE, color = "orange") +
+  geom_point(aes(expr_avg, ddG), stroke = 0, alpha = 0.2) +
+  geom_smooth(aes(expr_avg, ddG), method = "lm", se = FALSE, color = "orange") +
   geom_text(
     aes(
-      x = xpos, 
-      y = ypos, 
-      label = paste0("R=", R, "\np", p),
-      hjust = hpos
+      x = -2.4, 
+      y = 4.3, 
+      label = paste0("R = ", round0(R, 2))
     ),
-    size = rel(2.5),
+    size = rel(2.8),
     check_overlap = TRUE) +
-  facet_grid(Method~Parameter, labeller = labeller(Parameter = param_names)) +
+  scale_y_continuous(limits = c(NA, 4.7)) +
+  facet_grid(Method~PDB, scales = "free_x") +
   labs(
-    x = "Value",
+    x = "Expression",
     y = expression(Delta*Delta*G[Pred]~"(kcal/mol)")
   ) +
   theme(
     strip.text.y = element_text(angle = 0)
   )
 
-ggsave("figures/Figure_4.png", width = 15, height = 10, units = "cm", dpi = 600)
+
+p2 <- all_data %>% 
+  filter(Method != "Simba_SYM") %>% 
+  group_by(PDB, Method) %>% 
+  mutate(
+    R = sqrt(rsquared(bind_avg, ddG)),
+    p = p_value(bind_avg, ddG)
+  ) %>% 
+  ggplot() +
+  geom_point(aes(bind_avg, ddG), stroke = 0, alpha = 0.2) +
+  geom_smooth(aes(bind_avg, ddG), method = "lm", se = FALSE, color = "orange") +
+  geom_text(
+    aes(
+      x = -2.7, 
+      y = 4.3, 
+      label = paste0("R = ", round0(R, 2))
+    ),
+    size = rel(2.8),
+    check_overlap = TRUE) +
+  scale_y_continuous(limits = c(NA, 4.7)) +
+  facet_grid(Method~PDB, scales = "free_x") +
+  labs(
+    x = "Binding",
+    y = expression(Delta*Delta*G[Pred]~"(kcal/mol)")
+  ) +
+  theme(
+    strip.text.y = element_text(angle = 0)
+  )
+
+p1 / p2 + plot_annotation(tag_levels = "a") & 
+  theme(plot.tag = element_text(size = 14))
+
+ggsave("figures/Figure_4.png", width = 20, height = 22, units = "cm", dpi = 600)
