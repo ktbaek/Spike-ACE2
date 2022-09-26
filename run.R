@@ -1,2 +1,11 @@
 files_sources <- list.files("code", full.names = TRUE)
-sapply(files_sources, source)
+
+source_echo <- 
+  function(filepath) {
+    
+    print(filepath)
+    source(filepath)
+    
+  }
+
+sapply(files_sources, source_echo)

@@ -50,7 +50,7 @@ read_csv("data/interim/all_data_avg.csv") %>%
   pivot_longer(c(expr_avg_all, bind_avg_all), names_to = "Parameter") %>%
   mutate(
     group = cut_width(RSA, 0.1, center = 0.05),
-    group = str_remove_all(group_1, "[()\\]\\[]")
+    group = str_remove_all(group, "[()\\]\\[]")
   ) %>% 
   rowwise() %>% 
   mutate(mid = as.double(str_split(group, ",")[[1]][1]) + 0.05) %>% 

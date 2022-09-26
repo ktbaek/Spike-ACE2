@@ -1,86 +1,55 @@
-all_data_avg <- read_csv("data/interim/all_data_avg.csv")
-binned_data <- read_csv("data/interim/all_data_avg_binned_RSA.csv")
+all_data <- read_csv("data/interim/all_data.csv", col_types = cols(RSA = col_double()))
 
-p_value <- function(x,y) {
-  m <- lm(y ~ x)
-  return(summary(m)$coefficients[2,4])
+analyze_pairs <- function(data, var1, var2, name1, name2) {
+  data %>%
+    filter(Method %in% c(name1, name2)) %>%
+    select(PDB, Wild, Number, Mutated, Method, ddG) %>%
+    pivot_wider(names_from = Method, values_from = ddG) %>%
+    group_by(PDB) %>%
+    mutate(R = sqrt(rsquared({{ var1 }}, {{ var2 }})))
 }
 
-param_names <- c(
-  "bind_avg_all" = "Binding",
-  "expr_avg_all" = "Expression"
-)
-
-p1 <- all_data_avg %>% 
-  filter(Method == "Simba_IB") %>%
-  select(-ddG) %>% 
-  pivot_longer(c(expr_avg_all, bind_avg_all), names_to = "Parameter") %>% 
-  group_by(Parameter) %>% 
-  mutate(
-    R = round0(sqrt(rsquared(RSA, value)), 2),
-    p = case_when(
-      round0(p_value(RSA, value), 2) == "0.00" ~ "<0.005",
-      TRUE ~ paste0("=", round0(p_value(RSA, value), 2))
+plot_pairs <- function(data, var1, var2, name1, name2, text_x = 4.7, text_y = -6.5, h = 1, v = 0) {
+  data %>%
+    ggplot() +
+    geom_point(aes({{ var1 }}, {{ var2 }}), stroke = 0, alpha = 0.2) +
+    geom_smooth(aes({{ var1 }}, {{ var2 }}), method = "lm", se = FALSE, color = "orange") +
+    geom_text(
+      aes(
+        x = text_x,
+        y = text_y,
+        hjust = h,
+        vjust = v,
+        label = paste0("R = ", round0(R, 2))
+      ),
+      size = rel(3.2),
+      check_overlap = TRUE
+    ) +
+    scale_x_continuous(limits = c(-6.5, 4.7), breaks = c(-5, 0, 5)) +
+    scale_y_continuous(limits = c(-6.5, 4.7)) +
+    facet_wrap(~PDB, ncol = 8, scales = "fixed") +
+    labs(
+      x = bquote(.(name1) ~ Delta * Delta * G[Pred] ~ "(kcal/mol)"),
+      y = bquote(atop(.(name2), Delta * Delta * G[Pred] ~ "(kcal/mol)"))
+    ) +
+    coord_fixed() +
+    theme(
+      strip.text.y = element_text(angle = 0)
     )
-  ) %>% 
-  ggplot() +
-  geom_point(aes(RSA, value), stroke = 0, alpha = 0.2) +
-  geom_smooth(aes(RSA, value), method = "lm", se = FALSE, color = "orange") +
-  geom_text(
-    aes(
-      x = 1, 
-      y = -4.3, 
-      label = paste0("R=", R, " p", p)
-    ),
-    size = rel(3),
-    check_overlap = TRUE,
-    hjust = 1
-  ) +
-  facet_grid(~Parameter, scales = "free", labeller = labeller(Parameter = param_names)) +
-  labs(
-    y = expression(Effect~of~mutation),
-    x = "RSA"
-  ) +
-  theme(
-    strip.text.y = element_text(angle = 0)
-  )
+}
 
-p2 <- binned_data %>%  
-  group_by(Method, Parameter) %>% 
-  mutate(
-    R = round0(sqrt(rsquared(mid, mean_value)), 2),
-    p = case_when(
-      round0(p_value(mid, mean_value), 2) == "0.00" ~ "<0.005",
-      TRUE ~ paste0("=", round0(p_value(mid, mean_value), 2))
-    )
-  ) %>% 
-  ggplot() +
-  geom_pointrange(aes(x = mid, y = mean_value, ymin = mean_value - sd_value, ymax = mean_value + sd_value),
-                  stroke = 0, size = 0.5) +
-geom_smooth(aes(mid, mean_value), method = "lm", se = FALSE, color = "orange") +
-geom_text(
-  aes(
-    x = 1, 
-    y = -2.3, 
-    label = paste0("R=", R, " p", p)
-  ),
-  size = rel(3),
-  check_overlap = TRUE,
-  hjust = 1
-  ) +
-  facet_grid(~Parameter, scales = "free", labeller = labeller(Parameter = param_names)) +
-labs(
-  x = expression(RSA[Binned]),
-  y = "Effect of mutation"
-) +
-theme(
-  panel.grid.major.x = element_blank(),
-  panel.grid.major.y = element_line(size = rel(2))
-)
+p1 <- all_data %>%
+  analyze_pairs(DeepDDG, mCSM, "DeepDDG", "mCSM") %>%
+  plot_pairs(DeepDDG, mCSM, "DeepDDG", "mCSM")
 
+p2 <- all_data %>%
+  analyze_pairs(mCSM, Simba_IB, "mCSM", "Simba_IB") %>%
+  plot_pairs(mCSM, Simba_IB, "mCSM", "Simba_IB")
 
-p1 / p2 + plot_annotation(tag_levels = "a") & 
-  theme(plot.tag = element_text(size = 14))
+p3 <- all_data %>%
+  analyze_pairs(Simba_IB, DeepDDG, "Simba_IB", "DeepDDG") %>%
+  plot_pairs(Simba_IB, DeepDDG, "Simba_IB", "DeepDDG", h = 0, v = 1, text_x = -6.5, text_y = 4.7)
 
+p1 / p2 / p3
 
-ggsave("figures/Figure_S8.png", width = 14, height = 14, units = "cm", dpi = 600)
+ggsave("figures/Figure_S8.png", width = 22, height = 13, units = "cm", dpi = 600)
